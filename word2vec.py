@@ -3,12 +3,13 @@ import argparse as ap
 from gensim.models import Word2Vec
 
 def get_word2vec(infile):
+    vec_size = 100
     tweets = np.load(infile, allow_pickle=True)
     W2Vdata = []
     for sentence in tweets:
         tokens = list(sentence.lower().split())
         W2Vdata.append(tokens)
-    model = Word2Vec(sentences=W2Vdata, vector_size=100, window=3, min_count=5, workers=4, sg=1, negative=5)
+    model = Word2Vec(sentences=W2Vdata, vector_size=vec_size, window=3, min_count=3, workers=4, sg=1, negative=5)
     word_vectors = model.wv
     #process tweets to replace low-count words
     lowcountwords = []
@@ -19,16 +20,17 @@ def get_word2vec(infile):
                 if token not in lowcountwords:
                     lowcountwords.append(token)
     #rerun to include "UNK" to represent low-count words
-    model = Word2Vec(sentences=W2Vdata, vector_size=100, window=3, min_count=5, workers=4)
+    model = Word2Vec(sentences=W2Vdata, vector_size=vec_size, window=3, min_count=3, workers=4, sg=1, negative=5)
     word2vec = model.wv
     print(len(lowcountwords))
     #get tweet-level representation
-    tweet2vec = np.zeros([len(W2Vdata),100])
+    tweet2vec = np.zeros([len(W2Vdata),vec_size])
     for i,sentence in enumerate(W2Vdata):
+        sentence = np.unique(sentence)
         if len(sentence) > 1:
             tweet_vector = np.mean(word2vec[sentence], axis=0)
         else:
-            tweet_vector = np.zeros(100)
+            tweet_vector = np.zeros(vec_size)
         tweet2vec[i,:] = tweet_vector
     print(tweet2vec[1])
     return word2vec, tweet2vec
